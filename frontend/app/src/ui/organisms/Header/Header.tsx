@@ -1,9 +1,11 @@
 import React from 'react';
-import { AppBar, Container, Box } from '@mui/material';
+import { AppBar, Container, Box, Button } from '@mui/material';
 import theme from '../../theme';
 import Logo from '../../atoms/Logo/Logo';
+import { useWeb3Modal } from '@web3modal/wagmi/react'
 
 export default function Header(): JSX.Element {
+  const { open } = useWeb3Modal()
 
   return (
     <AppBar
@@ -47,6 +49,14 @@ export default function Header(): JSX.Element {
           <Box display="flex" alignItems="center">
             <Logo size="80px" />
           </Box>
+          <Button 
+            variant="contained"
+            color="primary"
+            size="small"
+            onClick={() => open()}
+          >
+            Connect
+          </Button>
         </Container>
       </Box>
     </AppBar>
