@@ -63,14 +63,26 @@ const ensValidation = async () => {
   console.log(name);
   const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
   console.log('Signature: ', signature);
-  console.log('Args: ', args);
+  console.log(args);
   const result = { result: ['0x74C19105f358BAb85f8E9FDA9202A1326A714d89'], ttl: 0 };
   console.log('Result: ', result);
+  const paddedAddress = ethers.utils.hexZeroPad(result.result[0], 32);
+  console.log('Padded address: ', paddedAddress);
+  // const resultTuple = [ethers.utils.formatBytes32String(paddedAddress), result.ttl];
+  const resultTuple = [paddedAddress, result.ttl];
+  console.log('Result tuple: ', resultTuple);
+  const finalResult2 = {
+    result: Resolver.encodeFunctionResult(signature, resultTuple),
+    validUntil: Math.floor(Date.now() / 1000),
+  };
+  console.log('Final result 2: ', finalResult2);
+  /*
   const finalResult = {
     result: Resolver.encodeFunctionResult(signature, [ result ]),
     validUntil: Math.floor(Date.now() / 1000),
   };
   console.log(finalResult);
+   */
 };
 
 ensValidation().then(() => {});
