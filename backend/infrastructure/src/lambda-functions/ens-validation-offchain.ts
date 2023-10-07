@@ -72,7 +72,7 @@ const ensValidation = async () => {
   const resultTuple = [paddedAddress, result.ttl];
   console.log('Result tuple: ', resultTuple);
   const finalResult2 = {
-    result: Resolver.encodeFunctionResult(signature, resultTuple),
+    result: Resolver.encodeFunctionResult(signature, [paddedAddress]),
     validUntil: Math.floor(Date.now() / 1000),
   };
   console.log('Final result 2: ', finalResult2);
