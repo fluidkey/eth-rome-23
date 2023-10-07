@@ -63,7 +63,7 @@ const themeOptions: ThemeOptions = {
       fontWeight: 600,
     },
     h5: {
-      fontWeight: 400,
+      fontWeight: 600,
       '@media (max-width:600px)': {
         fontSize: '1.4rem',
       },

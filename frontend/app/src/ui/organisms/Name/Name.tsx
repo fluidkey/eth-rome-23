@@ -28,7 +28,7 @@ export default function Name(): JSX.Element {
         mt={2}
         mb={3}
       >
-        <Typography variant="h6" textAlign="center">
+        <Typography variant="h5" textAlign="center" pb={1}>
           Choose a unique name
         </Typography>
         <Typography variant="body2" color="text.secondary" textAlign="center" pb={5}>
