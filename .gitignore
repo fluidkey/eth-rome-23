@@ -1,0 +1,14 @@
+.idea
+node_modules
+.DS_Store
+
+# Ignore node_modules folder at any level
+**/node_modules/
+
+# Ignore .idea folder at any level
+**/.idea/
+
+# Ignore VS Code local folders
+**/.vscode/
+
+**/.DS_Store
