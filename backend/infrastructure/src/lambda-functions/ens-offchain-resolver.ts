@@ -48,13 +48,14 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
   const abiCoder = defaultAbiCoder.decode(["bytes", "bytes"], data);
   const username = decodeDnsName(Buffer.from(abiCoder[0].slice(2), 'hex'));
   console.log('Username: ', username);
+  const usernameWithoutFkey = username.replace('.fkey.eth', '');
   // check if the username exists
-  const userItem = await userManager.getUserByUsername(username);
+  const userItem = await userManager.getUserByUsername(usernameWithoutFkey);
   const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
   console.log('Signature: ', signature);
   console.log(args);
   let paddedAddress;
-  if ( signature === 'addr(bytes32)' || signature === 'addr(bytes32,uint256)') {
+  if ( signature === 'addr(bytes32)' ) {
     let startingAddres;
     if ( userItem !== undefined ) {
       const userStealthAddress = await UserStealthAddressManager.generateStealthAddress({
@@ -68,15 +69,17 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
         hashedSharedSecret: userStealthAddress.hashedSharedSecret,
       });
       startingAddres = userStealthAddress.stealthAddress;
+      console.log('Stealth address: ', userStealthAddress.stealthAddress);
     } else startingAddres = '0x';
-    paddedAddress = signature === 'addr(bytes32)' ? startingAddres : ethers.utils.hexZeroPad('0x0', 32);
-  } else if ( signature === 'text(bytes32,string)' ) paddedAddress = '';
+    paddedAddress = startingAddres;
+  } else if ( signature === 'addr(bytes32,uint256)') paddedAddress = ethers.utils.hexZeroPad('0x0', 32);
+  else if ( signature === 'text(bytes32,string)' ) paddedAddress = '';
   else paddedAddress = '0x';
-  const finalResult2 = {
+  const finalResult = {
     result: Resolver.encodeFunctionResult(signature, [paddedAddress]),
     validUntil: Math.floor(Date.now() / 1000) + 100,
   };
-  console.log('Final result 2: ', finalResult2);
+  console.log('Final result: ', finalResult);
 
   // Hash and sign the response
   let messageHash = ethers.utils.solidityKeccak256(
@@ -84,17 +87,17 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     [
       '0x1900',
       requestTo,
-      finalResult2.validUntil,
+      finalResult.validUntil,
       ethers.utils.keccak256(dataWithoutJson || '0x'),
-      ethers.utils.keccak256(finalResult2.result),
-    ]
-  )
+      ethers.utils.keccak256(finalResult.result),
+    ],
+  );
 
-  const sig = signer.signDigest(messageHash)
+  const sig = signer.signDigest(messageHash);
   const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])]);
   console.log('Sig data: ', sigData);
   const dataResult = hexlify(ethers.utils.defaultAbiCoder.encode(
-    ['bytes', 'uint64', 'bytes'], [finalResult2.result, finalResult2.validUntil, sigData]));
+    ['bytes', 'uint64', 'bytes'], [finalResult.result, finalResult.validUntil, sigData]));
   return {
     statusCode: 200,
     body: JSON.stringify({data: dataResult}),

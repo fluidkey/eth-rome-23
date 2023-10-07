@@ -5,6 +5,7 @@ import {GraphQLQueryGetUserByAddress} from "./method/graphql-query-get-user-by-a
 import {GraphQLQueryIsUserRegistered} from "./method/graphql-query-is-user-registered";
 import {GraphQLMutationRegisterUser} from "./method/graphql-mutation-register-user";
 import {GraphQLMutationSetUsername} from "./method/graphql-mutation-set-username";
+import {GraphQLQueryGetUserStealthAddresses} from "./method/graphql-query-get-user-stealth-addresses";
 
 interface AppSyncEvent {
   fieldName: string;
@@ -25,6 +26,12 @@ export const graphQLResolver = async (event: AppSyncEvent) => {
   switch (event.fieldName) {
     case 'getUserByAddress':
       response = await GraphQLQueryGetUserByAddress({
+        ddbDocClient: ddbDocClient,
+        address: event.arguments!.address as string,
+      });
+      break;
+    case 'getUserStealthAddresses':
+      response = await GraphQLQueryGetUserStealthAddresses({
         ddbDocClient: ddbDocClient,
         address: event.arguments!.address as string,
       });

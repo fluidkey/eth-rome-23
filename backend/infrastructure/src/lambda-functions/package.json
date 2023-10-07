@@ -36,6 +36,7 @@
     "lint": "eslint '*.ts' --quiet --fix",
     "compile": "tsc",
     "test": "npm run compile && npm run unit",
-    "ensValidationOffchain": "npx ts-node --esm ens-offchain-resolver.ts"
+    "ensValidationOffchain": "npx ts-node --esm ens-offchain-resolver.ts",
+    "resetUser": "npx ts-node --esm scripts/reset-user.ts"
   }
 }

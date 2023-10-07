@@ -31,6 +31,7 @@ interface CreateGraphQLApiProps {
 interface CreateGraphQLResolverLambdaFunctionProps {
   scope: Construct;
   userTable: dynamodb.ITable;
+  userStealthAddressTable: dynamodb.ITable;
 }
 export interface FluidkeyEnsOffChainResolverInfrastructureProps extends StackProps {
   readonly privateKey: string;
@@ -45,7 +46,7 @@ export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
       {
         timeout: Duration.seconds(30),
         functionName: 'fluidkey-ens-off-chain-resolver-lambda-function',
-        memorySize: 256,
+        memorySize: 512,
         handler: 'lambdaHandler',
         entry: path.join(__dirname, 'lambda-functions/ens-offchain-resolver.ts'),
         bundling: {
@@ -153,6 +154,14 @@ export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
       responseMappingTemplate: appsync.MappingTemplate.fromFile(
         path.join(__dirname, 'graphql/mapping-templates/Query.getUserByAddress.response.vtl')),
     });
+    resolverLambdaDataSource.createResolver('QueryGetUserStealthAddresses', {
+      typeName: 'Query',
+      fieldName: 'getUserStealthAddresses',
+      requestMappingTemplate: appsync.MappingTemplate.fromFile(
+        path.join(__dirname, 'graphql/mapping-templates/Query.getUserStealthAddresses.request.vtl')),
+      responseMappingTemplate: appsync.MappingTemplate.fromFile(
+        path.join(__dirname, 'graphql/mapping-templates/Query.getUserStealthAddresses.response.vtl')),
+    });
     resolverLambdaDataSource.createResolver('QueryIsUserRegistered', {
       typeName: 'Query',
       fieldName: 'isUserRegistered',
@@ -198,6 +207,7 @@ export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
       ],
       resources: [
         `${props.userTable.tableArn}/index/username-index`,
+        props.userStealthAddressTable.tableArn,
       ],
     }));
     graphQLResolverLambdaFunction.addToRolePolicy(new iam.PolicyStatement({
@@ -238,6 +248,7 @@ export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
     this.graphQLResolverLambdaFunction = FluidkeyEnsOffChainResolverInfrastructure.createGraphQLResolverLambdaFunction({
       scope: this,
       userTable: userTable,
+      userStealthAddressTable: userStealthAddressTable,
     });
     this.graphQLApi = FluidkeyEnsOffChainResolverInfrastructure.createGraphQLApi({
       scope: this,
