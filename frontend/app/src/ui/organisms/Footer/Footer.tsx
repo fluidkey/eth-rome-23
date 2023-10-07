@@ -1,11 +1,34 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { AppBar, Container, Box, Button, Typography, TextField } from '@mui/material';
 import theme from '../../theme';
 import { ArrowRightAltRounded } from '@mui/icons-material';
+import supabase from '../../../utils/supabase';
 
 export default function Footer(): JSX.Element {
+  const [join, setJoin] = useState(false);
+  const [emailInput, setEmailInput] = useState<string>('');
+  const [isValidEmail, setIsValidEmail] = useState(true);
+  const [isEmailSubmitted, setIsEmailSubmitted] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+    const isValidEmail = re.test(String(emailInput).toLowerCase());
+    if (isValidEmail) {
+      setIsValidEmail(true);
+      const { error } = await supabase.from('waitlist').insert([{ email: emailInput }]);
+      if (error) {
+        console.error(error);
+      } else {
+        setIsEmailSubmitted(true);
+      }
+    } else {
+      setIsValidEmail(false);
+    }
+  }
 
   return (
+    isEmailSubmitted ? <></> :
     <AppBar
       position="fixed"
       sx={{
@@ -45,32 +68,61 @@ export default function Footer(): JSX.Element {
           }}
           key="header"
         >
-          <Typography variant="body1">
-            Join the waitlist to get early access
-          </Typography>
-          <TextField
-            label=""
-            variant="standard" 
-            placeholder="Your email"            
-            style={{ 
-              textAlign: 'right',
-              flex: 1, 
-            }}
-            inputProps={{ style: { textAlign: 'center', fontWeight: 600 } }}
-          />
-          <Button
-            color="inherit"
-            size="small"
-            variant="outlined"
-            endIcon={<ArrowRightAltRounded />}
-            sx={{
-              padding: '0px',
-              textTransform: 'none',
-              marginLeft: '8px',
-            }}
-          >
-            Join
-          </Button>
+          <Box component="form" onSubmit={handleSubmit} display="flex" justifyContent="space-between" width="100%">
+              {!join ?
+                (
+                  <Typography variant="body1">
+                    Join the waitlist to get early access
+                  </Typography>
+                ) : (
+                  <TextField
+                    label=""
+                    autoFocus={true}
+                    variant="standard" 
+                    placeholder="Your email"            
+                    inputProps={{ style: { textAlign: 'center', fontWeight: 600 } }}
+                    fullWidth
+                    value={emailInput}
+                    onChange={e => {
+                      setEmailInput(e.target.value);
+                    }}
+                  />
+                )
+              }
+              {!join ?
+                (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    variant="outlined"
+                    endIcon={<ArrowRightAltRounded />}
+                    sx={{
+                      padding: '0px',
+                      textTransform: 'none',
+                      marginLeft: '8px',
+                    }}
+                    onClick={() => setJoin(!join)}
+                  >
+                    Join
+                  </Button>
+                ) : (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    variant="outlined"
+                    endIcon={<ArrowRightAltRounded />}
+                    sx={{
+                      padding: '0px',
+                      paddingX: '18px',
+                      textTransform: 'none',
+                      marginLeft: '8px',
+                    }}
+                    type="submit"
+                  >
+                    Submit
+                  </Button>
+                )}
+            </Box>
         </Container>
       </Box>
     </AppBar>
