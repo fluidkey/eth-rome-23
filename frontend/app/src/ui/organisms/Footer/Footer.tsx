@@ -56,7 +56,7 @@ export default function Footer(): JSX.Element {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            height: '7vh',
+            height: '10vh',
             maxHeight: '50px',
             minHeight: '40px',
             marginBottom: '5vh',
@@ -68,7 +68,7 @@ export default function Footer(): JSX.Element {
           }}
           key="header"
         >
-          <Box component="form" onSubmit={handleSubmit} display="flex" justifyContent="space-between" width="100%">
+          <Box component="form" onSubmit={handleSubmit} display="flex" justifyContent="space-between" width="100%" height="100%" alignItems="center">
               {!join ?
                 (
                   <Typography variant="body1">
@@ -97,7 +97,8 @@ export default function Footer(): JSX.Element {
                     variant="outlined"
                     endIcon={<ArrowRightAltRounded />}
                     sx={{
-                      padding: '0px',
+                      paddingY: '3px',
+                      paddingX: '12px',
                       textTransform: 'none',
                       marginLeft: '8px',
                     }}
@@ -112,7 +113,7 @@ export default function Footer(): JSX.Element {
                     variant="outlined"
                     endIcon={<ArrowRightAltRounded />}
                     sx={{
-                      padding: '0px',
+                      paddingY: '3px',
                       paddingX: '18px',
                       textTransform: 'none',
                       marginLeft: '8px',
