@@ -3,6 +3,11 @@ import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import { uniqueNamesGenerator, colors, animals, Config } from 'unique-names-generator';
 import { ArrowRightAltRounded, RefreshRounded } from "@mui/icons-material";
 import FocusContainer from "../../atoms/Containers/FocusContainer";
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_USER_BY_ADDRESS, IS_USER_REGISTERED } from '../../../graphql/codegen/queries/User';
+import { REGISTER_USER, SET_USERNAME } from '../../../graphql/codegen/mutations/User';
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
+import { useAccount } from 'wagmi'
 
 const customConfig: Config = {
   dictionaries: [colors, animals],
@@ -13,10 +18,33 @@ const customConfig: Config = {
 export default function Name(): JSX.Element {
   const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState(uniqueNamesGenerator(customConfig));
+  const { address } = useAccount();
 
   useEffect(() => {
     setName(uniqueNamesGenerator(customConfig));
   }, [refresh]);
+
+  const [registerUser, {}] = useMutation(REGISTER_USER, {
+    variables: {
+      registerUserInput: {
+        address: address as string,
+        spendingPubKey: privateKeyToAccount(generatePrivateKey()).publicKey,
+        viewingPubKey: privateKeyToAccount(generatePrivateKey()).publicKey,
+      }
+    }
+  });
+
+  const [setUsername, {}] = useMutation(SET_USERNAME, {
+    variables: {
+      address: address as string,
+      username: name,
+    }
+  });
+
+  const onConfirm = async () => {
+    await registerUser();
+    await setUsername();
+  }
 
   return(
     <FocusContainer>
@@ -72,6 +100,7 @@ export default function Name(): JSX.Element {
               textTransform: 'none',
               fontWeight: 700,
             }}
+            onClick={onConfirm}
           >
             Confirm name
           </Button>
