@@ -2,10 +2,9 @@ import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda";
 import {SigningKey} from "@ethersproject/signing-key";
 import * as ethers from "ethers";
 import {defaultAbiCoder, hexConcat} from "ethers/lib/utils";
-import { hexlify } from '@ethersproject/bytes';
-import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json'
+import {hexlify} from '@ethersproject/bytes';
+import {abi as Resolver_abi} from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json'
 import {Buffer} from "buffer";
-import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 import {createDdbDocClient} from "./utils/dynamodb-manager";
 import {UserManager} from "./utils/user-manager";
 import {DYNAMODB_TABLE} from "./utils/dynamodb-table";
@@ -19,7 +18,7 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 const signer = new SigningKey(PRIVATE_KEY);
 const Resolver = new ethers.utils.Interface(Resolver_abi);
 
-function decodeDnsName(dnsname: Buffer) {
+const decodeDnsName = (dnsname: Buffer): string => {
   const labels = [];
   let idx = 0;
   while (true) {
@@ -54,13 +53,6 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
   const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
   console.log('Signature: ', signature);
   console.log(args);
-  if ( userItem !== undefined ) {
-
-  }
-  const privateKey = generatePrivateKey();
-  const account = privateKeyToAccount(privateKey);
-  const result = { result: [account.address], ttl: 0 };
-  console.log('Result: ', result);
   let paddedAddress;
   if ( signature === 'addr(bytes32)' || signature === 'addr(bytes32,uint256)') {
     let startingAddres;
@@ -77,16 +69,9 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
       });
       startingAddres = userStealthAddress.stealthAddress;
     } else startingAddres = '0x';
-
-    // TODO: generate new address only if addr(bytes32)
     paddedAddress = signature === 'addr(bytes32)' ? startingAddres : ethers.utils.hexZeroPad('0x0', 32);
-  } else if ( signature === 'text(bytes32,string)' ) {
-    paddedAddress = '';
-  } else {
-    paddedAddress = '0x';
-  }
-  const resultTuple = [paddedAddress, result.ttl];
-  console.log('Result tuple: ', resultTuple);
+  } else if ( signature === 'text(bytes32,string)' ) paddedAddress = '';
+  else paddedAddress = '0x';
   const finalResult2 = {
     result: Resolver.encodeFunctionResult(signature, [paddedAddress]),
     validUntil: Math.floor(Date.now() / 1000) + 100,

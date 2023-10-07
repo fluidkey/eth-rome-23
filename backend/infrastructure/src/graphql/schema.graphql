@@ -14,7 +14,7 @@ type User @aws_api_key {
 
 type Mutation {
     registerUser(registerUserInput: RegisterUserInput!): User!
-    setUsername(idUser: String!, username: String!): User!
+    setUsername(address: String!, username: String!): User!
 }
 # QUERIES
 type Query {
