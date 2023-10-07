@@ -1,11 +1,16 @@
 import React from 'react';
-import { AppBar, Container, Box, Button } from '@mui/material';
+import { AppBar, Container, Box, Button, IconButton } from '@mui/material';
 import theme from '../../theme';
 import Logo from '../../atoms/Logo/Logo';
 import { useWeb3Modal } from '@web3modal/wagmi/react'
+import Address from '../../atoms/Address/Address';
+import { useAccount, useDisconnect } from 'wagmi';
+import { CancelRounded } from '@mui/icons-material';
 
 export default function Header(): JSX.Element {
   const { open } = useWeb3Modal()
+  const { address } = useAccount()
+  const { disconnect } = useDisconnect()
 
   return (
     <AppBar
@@ -49,14 +54,46 @@ export default function Header(): JSX.Element {
           <Box display="flex" alignItems="center">
             <Logo size="80px" />
           </Box>
+        {!address ? (
           <Button 
             variant="contained"
             color="primary"
             size="small"
             onClick={() => open()}
+            sx={{
+              lineHeight: 1.3,
+              textTransform: 'none',
+            }}
           >
             Connect
           </Button>
+        ) : (
+          <Box 
+            display="flex"
+            alignItems="center"
+          >
+            <Address
+              address={address}
+              sx={{
+                fontSize: '0.8rem',
+                marginRight: '4px',
+              }}
+            />
+            <IconButton
+              size="small"
+              children={
+                <CancelRounded
+                  fontSize="small"
+                  height="1.2em"
+                />
+              }
+              sx={{
+                opacity: 0.2,
+              }}
+              onClick={() => disconnect()}
+            />
+          </Box>
+        )}
         </Container>
       </Box>
     </AppBar>
