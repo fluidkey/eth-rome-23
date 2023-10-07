@@ -1,16 +1,20 @@
 import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda";
 import {SigningKey} from "@ethersproject/signing-key";
-// import { keccak256 } from 'viem';
-// import { toHex } from 'viem/utils';
-// import {Buffer} from "buffer";
 import * as ethers from "ethers";
 import {defaultAbiCoder, hexConcat} from "ethers/lib/utils";
 import { hexlify } from '@ethersproject/bytes';
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json'
 import {Buffer} from "buffer";
 import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
-// import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json'
+import {createDdbDocClient} from "./utils/dynamodb-manager";
+import {UserManager} from "./utils/user-manager";
+import {DYNAMODB_TABLE} from "./utils/dynamodb-table";
+import {UserStealthAddressManager} from "./utils/user-stealth-address-manager";
 
+const ddbDocClient = createDdbDocClient();
+const userManager = new UserManager(ddbDocClient, DYNAMODB_TABLE.USER);
+const userStealthAddressManager = new UserStealthAddressManager(
+  ddbDocClient, DYNAMODB_TABLE.USER_STEALTH_ADDRESS);
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 const signer = new SigningKey(PRIVATE_KEY);
 const Resolver = new ethers.utils.Interface(Resolver_abi);
@@ -43,24 +47,44 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
   console.log('Data: ', data);
 
   const abiCoder = defaultAbiCoder.decode(["bytes", "bytes"], data);
-  const name = decodeDnsName(Buffer.from(abiCoder[0].slice(2), 'hex'));
-  console.log('Username: ', name);
-
+  const username = decodeDnsName(Buffer.from(abiCoder[0].slice(2), 'hex'));
+  console.log('Username: ', username);
+  // check if the username exists
+  const userItem = await userManager.getUserByUsername(username);
   const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
   console.log('Signature: ', signature);
   console.log(args);
+  if ( userItem !== undefined ) {
+
+  }
   const privateKey = generatePrivateKey();
   const account = privateKeyToAccount(privateKey);
   const result = { result: [account.address], ttl: 0 };
   console.log('Result: ', result);
   let paddedAddress;
-  if ( signature === 'addr(bytes32)') {
-    paddedAddress = result.result[0];
+  if ( signature === 'addr(bytes32)' || signature === 'addr(bytes32,uint256)') {
+    let startingAddres;
+    if ( userItem !== undefined ) {
+      const userStealthAddress = await UserStealthAddressManager.generateStealthAddress({
+        userSpendingPubKey: userItem.spendingPubKey,
+        userViewingPubKey: userItem.viewingPubKey,
+      });
+      await userStealthAddressManager.createUserStealthAddress({
+        address: userItem.address,
+        ephemeralPubKey: userStealthAddress.ephemeralPubKey,
+        stealthAddress: userStealthAddress.stealthAddress,
+        hashedSharedSecret: userStealthAddress.hashedSharedSecret,
+      });
+      startingAddres = userStealthAddress.stealthAddress;
+    } else startingAddres = '0x';
+
+    // TODO: generate new address only if addr(bytes32)
+    paddedAddress = signature === 'addr(bytes32)' ? startingAddres : ethers.utils.hexZeroPad('0x0', 32);
+  } else if ( signature === 'text(bytes32,string)' ) {
+    paddedAddress = '';
   } else {
-    paddedAddress = ethers.utils.hexZeroPad(result.result[0], 32);
+    paddedAddress = '0x';
   }
-  console.log('Padded address: ', paddedAddress);
-  // const resultTuple = [ethers.utils.formatBytes32String(paddedAddress), result.ttl];
   const resultTuple = [paddedAddress, result.ttl];
   console.log('Result tuple: ', resultTuple);
   const finalResult2 = {
@@ -91,10 +115,3 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
     body: JSON.stringify({data: dataResult}),
   };
 }
-
-// @ts-ignore
-/*
-lambdaHandler({rawPath: '/0xabe739af28742ca9b9aa83e5a01439a66f0361e3/0x9061b92300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000001005706970706f04666b657903657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000243b3b57de1ab3fdefac178c84411b515152fcb97efcfa096b53c61ab67d62d86f12545c2900000000000000000000000000000000000000000000000000000000.json'}).then((response) => {
-  console.log(response);
-});
-*/

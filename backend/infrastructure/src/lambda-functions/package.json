@@ -9,7 +9,8 @@
     "@ensdomains/ens-contracts": "^0.0.22",
     "@ensdomains/offchain-resolver-contracts": "^0.2.1",
     "@ensdomains/ccip-read-cf-worker": "^0.0.1",
-    "viem": "^1.15.4"
+    "viem": "^1.15.4",
+    "@noble/secp256k1": "^1.7.1"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.121",

@@ -19,8 +19,8 @@ export interface UserItem {
   address: string;
   username?: string | undefined;
   registeredAt: number;
-  spendingPubKey: string;
-  viewingPubKey: string;
+  spendingPubKey: `0x${string}`;
+  viewingPubKey: `0x${string}`;
 }
 export class UserManager extends DynamodbManager {
   private static fromItemToUserItem = (item: Record<string, any>): UserItem => {
@@ -28,8 +28,8 @@ export class UserManager extends DynamodbManager {
       address: item.address as string,
       username: item.username,
       registeredAt: item.registeredAt as number,
-      spendingPubKey: item.spendingPubKey as string,
-      viewingPubKey: item.viewingPubKey as string,
+      spendingPubKey: item.spendingPubKey as `0x${string}`,
+      viewingPubKey: item.viewingPubKey as `0x${string}`,
     };
   };
   public static fromUserItemToUser = (userItem: UserItem): User => {
@@ -53,8 +53,8 @@ export class UserManager extends DynamodbManager {
     const userItem: UserItem = {
       address: address,
       registeredAt: Math.floor(Date.now() / 1000),
-      viewingPubKey: params.viewingPubKey,
-      spendingPubKey: params.spendingPubKey,
+      viewingPubKey: params.viewingPubKey as `0x${string}`,
+      spendingPubKey: params.spendingPubKey as `0x${string}`,
     };
     await this.ddbDocClient.put({ TableName: this.tableName, Item: userItem });
     return userItem;

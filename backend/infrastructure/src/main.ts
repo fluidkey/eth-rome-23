@@ -58,6 +58,24 @@ export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
         logRetention: logs.RetentionDays.TWO_WEEKS,
       },
     );
+    createEnsOffChainResolverLambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'dynamodb:PutItem',
+      ],
+      resources: [
+        props.userStealthAddressTable.tableArn,
+      ],
+    }));
+    createEnsOffChainResolverLambdaFunction.addToRolePolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'dynamodb:Query',
+      ],
+      resources: [
+        `${props.userTable.tableArn}/index/username-index`,
+      ],
+    }));
     return createEnsOffChainResolverLambdaFunction.addFunctionUrl({
       authType: lambda.FunctionUrlAuthType.NONE,
     });
@@ -225,6 +243,24 @@ export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
       scope: this,
       graphQLResolverLambdaFunction: this.graphQLResolverLambdaFunction,
     });
+    new cdk.CfnOutput(
+      this,
+      'GraphQLApiUrl',
+      {
+        value: this.graphQLApi.graphqlUrl as string,
+        description: 'GraphQLApiUrl',
+        exportName: `GraphQLApiUrl`,
+      },
+    );
+    new cdk.CfnOutput(
+      this,
+      'GraphQLApiKey',
+      {
+        value: this.graphQLApi.apiKey as string,
+        description: 'GraphQLApiKey',
+        exportName: `GraphQLApiKey`,
+      },
+    );
   }
 }
 
