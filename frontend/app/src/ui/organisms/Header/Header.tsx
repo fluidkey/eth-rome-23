@@ -59,7 +59,7 @@ export default function Header(): JSX.Element {
             variant="contained"
             color="primary"
             size="small"
-            onClick={() => open()}
+            onClick={() => open({view: 'Connect'})}
             sx={{
               lineHeight: 1.3,
               textTransform: 'none',
