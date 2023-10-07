@@ -2,8 +2,9 @@
 import * as ethers from "ethers";
 // import { Server } from '@ensdomains/ccip-read-cf-worker';
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json';
-import {defaultAbiCoder} from "ethers/lib/utils";
+import {defaultAbiCoder, hexConcat} from "ethers/lib/utils";
 import {Buffer} from "buffer";
+import {SigningKey} from "@ethersproject/signing-key";
 // import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json';
 // import {Result} from "@ethersproject/abi";
 // import {hexConcat} from "ethers/lib/utils";
@@ -11,6 +12,7 @@ import {Buffer} from "buffer";
 // const dataRequest = '0xCBDbC3EC4133f489d63A54E8784b1447FC37DE04/0x9061b92300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000001a07657468726f6d650c6f6666636861696e64656d6f036574680000000000000000000000000000000000000000000000000000000000000000000000000000243b3b57de60345e90e274c6afca1e14cba855c64b4d1803a8bd3743775a865ddddc4bf88800000000000000000000000000000000000000000000000000000000.json';
 const dataRequest = '0x0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000110474657374066d65746f6e7903657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f1cb7e0668cf610405ae6c9b41c6cf720368dc7b048597250fa2d6ac9d336bd116404641000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000';
 const Resolver = new ethers.utils.Interface(Resolver_abi);
+const signer = new SigningKey(process.env.PRIVATE_KEY as string);
 
 function decodeDnsName(dnsname: Buffer) {
   const labels = []
@@ -25,40 +27,16 @@ function decodeDnsName(dnsname: Buffer) {
 }
 
 const ensValidation = async () => {
-  // const { signature, args } = Resolver.parseTransaction({ data: dataRequest });
-  // console.log(signature, args);
-  /*
-  const server = new Server()
-  server.add(IResolverService_abi, [
-    {
-      type: 'resolve',
-      func: async ([encodedName, data]: Result, request: any) => {
-        const name = decodeDnsName(Buffer.from(encodedName.slice(2), 'hex'))
+  const req = '/0xabe739af28742ca9b9aa83e5a01439a66f0361e3/0x9061b9230000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000008000000000000000000000000000000000000000000000000000000000000000110474657374066d65746f6e7903657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000044f1cb7e0668cf610405ae6c9b41c6cf720368dc7b048597250fa2d6ac9d336bd116404641000000000000000000000000000000000000000000000000000000000000000300000000000000000000000000000000000000000000000000000000.json';
+  const reqSplit = req.split('/');
+  const requestTo = reqSplit[1];
+  const dataWithoutJson = reqSplit[2].replace('.json', '');
+  console.log('Data without json: ', reqSplit[2]);
+  const data = `0x${dataWithoutJson.slice(10)}`;
+  console.log(requestTo);
+  console.log('Data: ', data);
 
-        // Query the database
-        const {result, validUntil} = await query(await db, name, data, env)
-
-        // Hash and sign the response
-        let messageHash = ethers.utils.solidityKeccak256(
-          ['bytes', 'address', 'uint64', 'bytes32', 'bytes32'],
-          [
-            '0x1900',
-            request?.to,
-            validUntil,
-            ethers.utils.keccak256(request?.data || '0x'),
-            ethers.utils.keccak256(result),
-          ]
-        )
-
-        const sig = signer.signDigest(messageHash)
-        const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])])
-        return [result, validUntil, sigData]
-      },
-    },
-  ])
-   */
   const abiCoder = defaultAbiCoder.decode(["bytes", "bytes"], dataRequest);
-
   const name = decodeDnsName(Buffer.from(abiCoder[0].slice(2), 'hex'))
   console.log(name);
   const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
@@ -73,9 +51,25 @@ const ensValidation = async () => {
   console.log('Result tuple: ', resultTuple);
   const finalResult2 = {
     result: Resolver.encodeFunctionResult(signature, [paddedAddress]),
-    validUntil: Math.floor(Date.now() / 1000),
+    validUntil: Math.floor(Date.now() / 1000) + 100,
   };
   console.log('Final result 2: ', finalResult2);
+
+  // Hash and sign the response
+  let messageHash = ethers.utils.solidityKeccak256(
+    ['bytes', 'address', 'uint64', 'bytes32', 'bytes32'],
+    [
+      '0x1900',
+      '0xabe739af28742ca9b9aa83e5a01439a66f0361e3',
+      finalResult2.validUntil,
+      ethers.utils.keccak256(dataRequest || '0x'),
+      ethers.utils.keccak256(finalResult2.result),
+    ]
+  )
+
+  const sig = signer.signDigest(messageHash)
+  const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])]);
+  console.log('Sig data: ', sigData);
   /*
   const finalResult = {
     result: Resolver.encodeFunctionResult(signature, [ result ]),

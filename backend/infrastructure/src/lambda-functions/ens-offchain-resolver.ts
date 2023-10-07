@@ -4,15 +4,15 @@ import {SigningKey} from "@ethersproject/signing-key";
 // import { toHex } from 'viem/utils';
 // import {Buffer} from "buffer";
 import * as ethers from "ethers";
-import {hexConcat} from "ethers/lib/utils";
+import {defaultAbiCoder, hexConcat} from "ethers/lib/utils";
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json'
+import {Buffer} from "buffer";
 // import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json'
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 const signer = new SigningKey(PRIVATE_KEY);
-const resolver = new ethers.utils.Interface(Resolver_abi);
+const Resolver = new ethers.utils.Interface(Resolver_abi);
 
-/*
 function decodeDnsName(dnsname: Buffer) {
   const labels = [];
   let idx = 0;
@@ -24,60 +24,61 @@ function decodeDnsName(dnsname: Buffer) {
   }
   return labels.join('.');
 }
- */
 
 export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   console.log(event);
-  /*
-    const name = decodeDnsName(Buffer.from(encodedName.slice(2), 'hex'))
+  // @ts-ignore
+  console.log(event.rawPath);
+  //   console.log(event.requestContext.path);
+  // @ts-ignore
+  const rawPath = event.rawPath;
+  const rawPathSplit = rawPath.split('/');
+  const requestTo = rawPathSplit[1];
 
-    // Query the database
-    const { result, validUntil } = await query(await db, name, data, env)
+  const dataWithoutJson = rawPathSplit[2].replace('.json', '');
+  console.log('Data without json: ', dataWithoutJson);
+  const data = `0x${dataWithoutJson.slice(10)}`;
 
-    // Hash and sign the response
-    let messageHash = ethers.utils.solidityKeccak256(
-      ['bytes', 'address', 'uint64', 'bytes32', 'bytes32'],
-      [
-        '0x1900',
-        request?.to,
-        validUntil,
-        ethers.utils.keccak256(request?.data || '0x'),
-        ethers.utils.keccak256(result),
-      ]
-    )
+  const abiCoder = defaultAbiCoder.decode(["bytes", "bytes"], data);
+  const name = decodeDnsName(Buffer.from(abiCoder[0].slice(2), 'hex'));
+  console.log('Username: ', name);
 
-    const sig = signer.signDigest(messageHash)
-    const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])])
-    return [result, validUntil, sigData]
-  },
-  */
+  const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
+  console.log('Signature: ', signature);
+  console.log(args);
+  const result = { result: ['0x74C19105f358BAb85f8E9FDA9202A1326A714d89'], ttl: 0 };
+  console.log('Result: ', result);
+  const paddedAddress = ethers.utils.hexZeroPad(result.result[0], 32);
+  console.log('Padded address: ', paddedAddress);
+  // const resultTuple = [ethers.utils.formatBytes32String(paddedAddress), result.ttl];
+  const resultTuple = [paddedAddress, result.ttl];
+  console.log('Result tuple: ', resultTuple);
+  const finalResult2 = {
+    result: Resolver.encodeFunctionResult(signature, [paddedAddress]),
+    validUntil: Math.floor(Date.now() / 1000) + 100,
+  };
+  console.log('Final result 2: ', finalResult2);
 
-  const result = {addr: ['0x74C19105f358BAb85f8E9FDA9202A1326A714d89'], ttl: 1000};
-  // const result = JSON.stringify({});
-  const resultEnccoded = resolver.encodeFunctionResult('addr(bytes32,uint256)', [ result ]);
+  // Hash and sign the response
   let messageHash = ethers.utils.solidityKeccak256(
     ['bytes', 'address', 'uint64', 'bytes32', 'bytes32'],
     [
       '0x1900',
-      '0xCBDbC3EC4133f489d63A54E8784b1447FC37DE04',
-      0,
-      ethers.utils.keccak256('0x'),
-      ethers.utils.keccak256(resultEnccoded),
+      requestTo,
+      finalResult2.validUntil,
+      ethers.utils.keccak256(data || '0x'),
+      ethers.utils.keccak256(finalResult2.result),
     ]
   )
 
   const sig = signer.signDigest(messageHash)
-  const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])])
-
+  const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])]);
+  console.log('Sig data: ', sigData);
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      result: result,
-      sigData: sigData,
-      validUntil: 0
-    }),
+    body: JSON.stringify([finalResult2.result, finalResult2.validUntil, sigData]),
   };
 }
 
 // @ts-ignore
-lambdaHandler({}).then(() => {});
+lambdaHandler({rawPath: '/0xabe739af28742ca9b9aa83e5a01439a66f0361e3/0x9061b92300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000001005706970706f04666b657903657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000243b3b57de1ab3fdefac178c84411b515152fcb97efcfa096b53c61ab67d62d86f12545c2900000000000000000000000000000000000000000000000000000000.json'}).then(() => {});
