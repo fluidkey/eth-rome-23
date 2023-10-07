@@ -1,10 +1,10 @@
 import React from "react";
-import Typography from "@mui/material/Typography";
+import Header from "../organisms/Header/Header";
 
 export default function Main() {
   return (
-    <div>
-      <Typography variant="h1">Hello, world!</Typography>
-    </div>
+    <>
+      <Header />
+    </>
   );
 }
