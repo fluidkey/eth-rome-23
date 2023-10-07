@@ -40,7 +40,10 @@ createWeb3Modal({
 // APOLLO CLIENT
 // ----------------
 const httpLink = new HttpLink({
-  uri: 'https://24ruti2jzfh4bjh4f3klvvmpue.appsync-api.eu-west-1.amazonaws.com/graphql'
+  uri: 'https://24ruti2jzfh4bjh4f3klvvmpue.appsync-api.eu-west-1.amazonaws.com/graphql',
+  headers: {
+    'x-api-key': 'da2-hmxnxlt5xfetvk2saqbsmkby64'
+  },
 });
 const link = from([httpLink]);
 
@@ -48,9 +51,6 @@ const client = new ApolloClient({
   cache: new InMemoryCache({
     typePolicies: InMemoryCacheOptions
   }),
-  headers: {
-    'x-api-key': 'da2-hmxnxlt5xfetvk2saqbsmkby64'
-  },
   link: link,
 });
 
