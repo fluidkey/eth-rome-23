@@ -3,6 +3,7 @@ import { useAccount } from "wagmi";
 import { Box, Typography } from "@mui/material";
 import Name from "../organisms/Name/Name";
 import Dashboard from "../organisms/Dashboard/Dashboard";
+import Footer from "../organisms/Footer/Footer";
 
 export default function Main() {
   const { address } = useAccount();
@@ -45,6 +46,7 @@ export default function Main() {
         )
       }
       </Box>
+      <Footer />
     </>
   );
 }
