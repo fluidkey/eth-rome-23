@@ -5,6 +5,8 @@ import { WagmiConfig } from 'wagmi'
 import { base } from 'wagmi/chains'
 import theme from './ui/theme';
 import Main from './ui/pages/Main';
+import { ApolloClient, ApolloProvider, from, HttpLink, InMemoryCache } from '@apollo/client';
+import { InMemoryCacheOptions } from './graphql/codegen/InMemoryCacheOptions';
 
 const projectId = "912700a50171dd26f221cab915984a73"
 
@@ -18,9 +20,9 @@ const metadata = {
 const chains = [base]
 const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata })
 
-createWeb3Modal({ 
-  wagmiConfig, 
-  projectId, 
+createWeb3Modal({
+  wagmiConfig,
+  projectId,
   chains,
   themeMode: 'dark',
   themeVariables: {
@@ -29,7 +31,28 @@ createWeb3Modal({
     '--w3m-font-size-master': '8px',
     '--w3m-z-index': 10000,
   }
-})
+});
+
+/**
+ * APOLLO CLIENT
+ */
+// ----------------
+// APOLLO CLIENT
+// ----------------
+const httpLink = new HttpLink({
+  uri: 'https://24ruti2jzfh4bjh4f3klvvmpue.appsync-api.eu-west-1.amazonaws.com/graphql'
+});
+const link = from([httpLink]);
+
+const client = new ApolloClient({
+  cache: new InMemoryCache({
+    typePolicies: InMemoryCacheOptions
+  }),
+  headers: {
+    'x-api-key': 'da2-hmxnxlt5xfetvk2saqbsmkby64'
+  },
+  link: link,
+});
 
 function App(): JSX.Element {
   return (
@@ -37,9 +60,11 @@ function App(): JSX.Element {
       <ThemeProvider theme={theme}>
         <CssBaseline />
           <WagmiConfig config={wagmiConfig}>
-            <Routes>
-              <Route path="/" element={<Main />} />
-            </Routes>
+            <ApolloProvider client={client}>
+              <Routes>
+                <Route path="/" element={<Main />} />
+              </Routes>
+            </ApolloProvider>
           </WagmiConfig>
       </ThemeProvider>
     </BrowserRouter>
