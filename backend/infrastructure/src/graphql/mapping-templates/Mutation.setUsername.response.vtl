@@ -1,0 +1,7 @@
+#if($ctx.error)
+  $util.error("Internal Error", "InternalError", $ctx.result)
+#elseif($ctx.result && $ctx.result.errorMessage)
+  $util.error($context.result.errorMessage, $context.result.errorType, $context.result.data, $context.result.errorInfo)
+#else
+  $util.toJson($ctx.result)
+#end
