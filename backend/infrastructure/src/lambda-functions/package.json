@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "File to hash lambda function",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.369.0",
+    "@aws-sdk/client-dynamodb": "^3.427.0",
+    "@aws-sdk/lib-dynamodb": "^3.427.0",
     "ethers": "5.7.2",
     "@ensdomains/ens-contracts": "^0.0.22",
-    "@ensdomains/offchain-resolver-contracts": "^0.2.1"
+    "@ensdomains/offchain-resolver-contracts": "^0.2.1",
+    "viem": "^1.15.4"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.121",

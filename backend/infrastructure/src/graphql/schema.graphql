@@ -1,0 +1,27 @@
+input RegisterUserInput {
+    address: String!
+    spendingPubKey: String!
+    viewingPubKey: String!
+}
+
+type User @aws_api_key {
+    address: String!
+    registeredAt: Int!
+    spendingPubKey: String!
+    viewingPubKey: String!
+    username: String
+}
+
+type Mutation {
+    registerUser(registerUserInput: RegisterUserInput!): User!
+    setUsername(idUser: String!, username: String!): User!
+}
+# QUERIES
+type Query {
+    getUserByAddress(address: String!): User
+    isUserRegistered(address: String!): Boolean!
+}
+
+directive @aws_api_key on FIELD_DEFINITION | OBJECT
+directive @aws_lambda on FIELD_DEFINITION | OBJECT
+schema { query: Query, mutation: Mutation }
