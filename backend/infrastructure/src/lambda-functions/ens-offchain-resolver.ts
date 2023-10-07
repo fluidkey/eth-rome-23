@@ -5,8 +5,10 @@ import {SigningKey} from "@ethersproject/signing-key";
 // import {Buffer} from "buffer";
 import * as ethers from "ethers";
 import {defaultAbiCoder, hexConcat} from "ethers/lib/utils";
+import { hexlify } from '@ethersproject/bytes';
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json'
 import {Buffer} from "buffer";
+import {generatePrivateKey, privateKeyToAccount} from "viem/accounts";
 // import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json'
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
@@ -38,6 +40,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
   const dataWithoutJson = rawPathSplit[2].replace('.json', '');
   console.log('Data without json: ', dataWithoutJson);
   const data = `0x${dataWithoutJson.slice(10)}`;
+  console.log('Data: ', data);
 
   const abiCoder = defaultAbiCoder.decode(["bytes", "bytes"], data);
   const name = decodeDnsName(Buffer.from(abiCoder[0].slice(2), 'hex'));
@@ -46,9 +49,16 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
   const { signature, args } = Resolver.parseTransaction({ data: abiCoder[1] });
   console.log('Signature: ', signature);
   console.log(args);
-  const result = { result: ['0x74C19105f358BAb85f8E9FDA9202A1326A714d89'], ttl: 0 };
+  const privateKey = generatePrivateKey();
+  const account = privateKeyToAccount(privateKey);
+  const result = { result: [account.address], ttl: 0 };
   console.log('Result: ', result);
-  const paddedAddress = ethers.utils.hexZeroPad(result.result[0], 32);
+  let paddedAddress;
+  if ( signature === 'addr(bytes32)') {
+    paddedAddress = result.result[0];
+  } else {
+    paddedAddress = ethers.utils.hexZeroPad(result.result[0], 32);
+  }
   console.log('Padded address: ', paddedAddress);
   // const resultTuple = [ethers.utils.formatBytes32String(paddedAddress), result.ttl];
   const resultTuple = [paddedAddress, result.ttl];
@@ -66,7 +76,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
       '0x1900',
       requestTo,
       finalResult2.validUntil,
-      ethers.utils.keccak256(data || '0x'),
+      ethers.utils.keccak256(dataWithoutJson || '0x'),
       ethers.utils.keccak256(finalResult2.result),
     ]
   )
@@ -74,11 +84,17 @@ export const lambdaHandler = async (event: APIGatewayProxyEvent): Promise<APIGat
   const sig = signer.signDigest(messageHash)
   const sigData = hexConcat([sig.r, sig.s, new Uint8Array([sig.v])]);
   console.log('Sig data: ', sigData);
+  const dataResult = hexlify(ethers.utils.defaultAbiCoder.encode(
+    ['bytes', 'uint64', 'bytes'], [finalResult2.result, finalResult2.validUntil, sigData]));
   return {
     statusCode: 200,
-    body: JSON.stringify([finalResult2.result, finalResult2.validUntil, sigData]),
+    body: JSON.stringify({data: dataResult}),
   };
 }
 
 // @ts-ignore
-lambdaHandler({rawPath: '/0xabe739af28742ca9b9aa83e5a01439a66f0361e3/0x9061b92300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000001005706970706f04666b657903657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000243b3b57de1ab3fdefac178c84411b515152fcb97efcfa096b53c61ab67d62d86f12545c2900000000000000000000000000000000000000000000000000000000.json'}).then(() => {});
+/*
+lambdaHandler({rawPath: '/0xabe739af28742ca9b9aa83e5a01439a66f0361e3/0x9061b92300000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000001005706970706f04666b657903657468000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000243b3b57de1ab3fdefac178c84411b515152fcb97efcfa096b53c61ab67d62d86f12545c2900000000000000000000000000000000000000000000000000000000.json'}).then((response) => {
+  console.log(response);
+});
+*/
