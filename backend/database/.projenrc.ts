@@ -2,7 +2,7 @@ import { awscdk } from 'projen';
 const project = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: '2.93.0',
   defaultReleaseBranch: 'main',
-  name: '@fluidkey/backend-infrastructure',
+  name: '@fluidkey/backend-database',
   projenrcTs: true,
   gitignore: [ '.env' ],
   deps: [ 'dotenv' ],

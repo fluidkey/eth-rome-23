@@ -1,23 +1,77 @@
-import { App, Stack, StackProps } from 'aws-cdk-lib';
+import * as cdk from 'aws-cdk-lib';
+import {
+  App,
+  Duration,
+  Stack,
+  StackProps,
+  aws_dynamodb as dynamodb,
+  aws_lambda as lambda,
+  aws_lambda_nodejs as lambda_nodejs,
+  aws_logs as logs,
+} from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as dotenv from 'dotenv';
+import path from 'path';
 
-export class MyStack extends Stack {
-  constructor(scope: Construct, id: string, props: StackProps = {}) {
+dotenv.config();
+
+interface CreateEnsOffChainResolverLambdaFunctionUrlProps {
+  scope: Construct;
+  privateKey: string;
+  userTable: dynamodb.ITable;
+  userStealthAddressTable: dynamodb.ITable;
+}
+export interface FluidkeyEnsOffChainResolverInfrastructureProps extends StackProps {
+  readonly privateKey: string;
+}
+export class FluidkeyEnsOffChainResolverInfrastructure extends Stack {
+  private static createEnsOffChainResolverLambdaFunctionUrl = (
+    props: CreateEnsOffChainResolverLambdaFunctionUrlProps
+  ): lambda.FunctionUrl => {
+    const createEnsOffChainResolverLambdaFunction = new lambda_nodejs.NodejsFunction(
+      props.scope,
+      'EnsOffChainResolverLambdaFunction',
+      {
+        timeout: Duration.seconds(30),
+        functionName: 'fluidkey-ens-off-chain-resolver-lambda-function',
+        memorySize: 256,
+        handler: 'lambdaHandler',
+        entry: path.join(__dirname, 'lambda-functions/ens-offchain-resolver.ts'),
+        bundling: {
+          minify: true,
+        },
+        environment: {
+          PRIVATE_KEY: props.privateKey,
+        },
+        depsLockFilePath: path.join(__dirname, 'lambda-functions/yarn.lock'),
+        logRetention: logs.RetentionDays.TWO_WEEKS,
+      },
+    );
+    return createEnsOffChainResolverLambdaFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+    });
+  }
+  public readonly ensOffChainResolverLambdaFunctionUrl: lambda.FunctionUrl;
+  constructor(scope: Construct, id: string, props: FluidkeyEnsOffChainResolverInfrastructureProps) {
     super(scope, id, props);
-
-    // define resources here...
+    const userTable = dynamodb.Table.fromTableArn(
+      this, 'UserTable', cdk.Fn.importValue(`userTableArn`));
+    const userStealthAddressTable = dynamodb.Table.fromTableArn(
+      this, 'UserStealthAddressTable',  cdk.Fn.importValue(`userStealthAddressTableArn`));
+    this.ensOffChainResolverLambdaFunctionUrl = FluidkeyEnsOffChainResolverInfrastructure.createEnsOffChainResolverLambdaFunctionUrl({
+      privateKey: props.privateKey,
+      scope: this,
+      userTable: userTable,
+      userStealthAddressTable: userStealthAddressTable,
+    });
   }
 }
 
-// for development, use account/region from cdk cli
-const devEnv = {
-  account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: process.env.CDK_DEFAULT_REGION,
-};
-
 const app = new App();
 
-new MyStack(app, 'infrastructure-dev', { env: devEnv });
+new FluidkeyEnsOffChainResolverInfrastructure(app, 'fluidkey-backend-infrastructure-dev', {
+  privateKey: process.env.PRIVATE_KEY as string,
+});
 // new MyStack(app, 'infrastructure-prod', { env: prodEnv });
 
 app.synth();
