@@ -54,16 +54,16 @@ export const useGetPayments = (params: UseGetPaymentsParams): UseGetPaymentsResp
         if (!stealthAddresses) return;
         let promises = stealthAddresses.map((s: any) => {
           return new Promise((resolve) => {
-            axios.get(`https://base-goerli.blockscout.com/api/v2/addresses/${s}/transactions`)
-              .then(response => {
+            axios.get(`https://base.blockscout.com/api/v2/addresses/${s}/transactions`)
+              .then((response: unknown) => {
                 resolve(response);
               })
-              .catch(error => {
+              .catch(() => {
                 resolve(null);
               });
           });
         });
-        const fetchTxs = await Promise.all(promises);
+        const fetchTxs = await Promise.all(promises)
         let pos = 0;
         for (let ft of fetchTxs) {
           if (ft === null) {

@@ -14,7 +14,11 @@ const customConfig: Config = {
   length: 2,
 };
 
-export default function Name(): JSX.Element {
+interface NameProps {
+  refetch: () => void;
+}
+
+export default function Name({refetch}: NameProps): JSX.Element {
   const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState(uniqueNamesGenerator(customConfig));
   const [customName, setCustomName] = useState<string|undefined>(undefined);
@@ -44,6 +48,7 @@ export default function Name(): JSX.Element {
   const onConfirm = async () => {
     await registerUser();
     await setUsername();
+    await refetch();
   }
 
   return(

@@ -25,7 +25,7 @@ export default function Main() {
   });
   console.log(nameSet);
 
-  const {data: user, loading: userLoading} = useQuery(GET_USER_BY_ADDRESS, {
+  const {data: user, loading: userLoading, refetch} = useQuery(GET_USER_BY_ADDRESS, {
     variables: {
       address: address as string,
     },
@@ -34,10 +34,11 @@ export default function Main() {
   console.log(user);
 
   useEffect(() => {
-    if(address && !isSuccess && !user && !userLoading && !registerLoading && !nameSet) {
+    console.log(address, isSuccess, userLoading, registerLoading, nameSet?.isUserRegistered);
+    if(address && !isSuccess && !registerLoading && !nameSet?.isUserRegistered) {
       signMessage()
     }
-  }, [address]);
+  }, [address, registerLoading]);
 
   useEffect(() => {
     if(isError) {
@@ -56,7 +57,7 @@ export default function Main() {
         mt="12vh"
       >
       {address ?
-        nameSet && user?.getUserByAddress?.username ?
+        user?.getUserByAddress?.username ?
         (
           <Dashboard />
         ) : (
@@ -68,7 +69,7 @@ export default function Main() {
             alignItems="center"
             height="70vh"
           >
-            <Name />
+            <Name refetch={refetch}/>
           </Box> ) :(
             <Box
             display="flex"

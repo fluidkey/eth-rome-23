@@ -1,8 +1,25 @@
 import { Box, Link, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { LaunchRounded } from "@mui/icons-material";
 import CompressedAddress from "../../atoms/Address/CompressedAddress";
+import { useGetPayments } from "../../../hooks/useGetPayments";
+import { useAccount } from "wagmi";
+import { useQuery } from "@apollo/client";
+import { GET_USER_BY_ADDRESS } from "../../../graphql/codegen/queries/User";
 
 export default function Dashboard(): JSX.Element {
+  const { address } = useAccount();
+  const { payments, loading } = useGetPayments({
+    address: address as string,
+    intervalInSeconds: 5,
+  });
+
+  const {data: user, loading: userLoading} = useQuery(GET_USER_BY_ADDRESS, {
+    variables: {
+      address: address as string,
+    },
+    skip: !address
+  });
+
   return (
     <Box
       display="flex"
@@ -22,9 +39,22 @@ export default function Dashboard(): JSX.Element {
           Your private address
         </Typography>
         <Typography variant="h6" mb={4}>
-          user.fkey.eth
+          {user?.getUserByAddress?.username ? user?.getUserByAddress?.username + ".fkey.eth" : null }
         </Typography>
       </Box>
+      {payments.length === 0 ? (
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          height="100%"
+        >
+          <Typography variant="body2" color="text.secondary">
+            No payments yet
+          </Typography>
+        </Box>
+      ) : (
       <TableContainer>
         <Table>
           <TableHead>
@@ -34,36 +64,36 @@ export default function Dashboard(): JSX.Element {
               <TableCell></TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>          
-            <TableRow>
-              <TableCell>0.002 ETH</TableCell>
-              <TableCell><CompressedAddress address="0xb250c202310da0b15b82E985a30179e74f414457" characters={12} /></TableCell>
-              <TableCell>
-                <Box component="span" display="inline-flex" alignItems="baseline">
-                  <Link 
-                    alignItems="baseline" 
-                    underline="none"
-                    sx={{
-                      color: 'primary.dark',
-                      "&:hover": {
-                        cursor: 'pointer',
-                        color: 'primary.main',
-                      },
-                    }}
-                  >
-                    Basescan <LaunchRounded style={{ fontSize: 'inherit', verticalAlign: 'text-top' }} />
-                  </Link>
-                </Box>
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>0.00102 ETH</TableCell>
-              <TableCell>0xFb2...401</TableCell>
-              <TableCell>Basescan</TableCell>
-            </TableRow>
+          <TableBody> 
+            {payments.map((payment) => (
+              <TableRow key={payment.thHash}>
+                <TableCell>{payment.amount} ETH</TableCell>
+                <TableCell><CompressedAddress address={payment.from as `0x${string}`} characters={12} /></TableCell>
+                <TableCell>
+                  <Box component="span" display="inline-flex" alignItems="baseline">
+                    <Link
+                      alignItems="baseline"
+                      underline="none"
+                      sx={{
+                        color: "primary.dark",
+                        "&:hover": {
+                          cursor: "pointer",
+                          color: "primary.main",
+                        },
+                      }}
+                      href={`https://basescan.org/tx/${payment.thHash}`}
+                      target="_blank"
+                    >
+                      Basescan <LaunchRounded style={{ fontSize: "inherit", verticalAlign: "text-top" }} />
+                    </Link>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}         
           </TableBody>
         </Table>
       </TableContainer>
+      )}
     </Box>
   );
 }
