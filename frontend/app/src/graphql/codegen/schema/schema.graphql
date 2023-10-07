@@ -19,6 +19,7 @@ type Mutation {
 # QUERIES
 type Query {
     getUserByAddress(address: String!): User
+    getUserStealthAddresses(address: String!): [ String ]
     isUserRegistered(address: String!): Boolean!
 }
 

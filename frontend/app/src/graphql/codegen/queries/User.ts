@@ -17,3 +17,9 @@ export const GET_USER_BY_ADDRESS = graphql(`
         }
     }
 `);
+
+export const GET_USER_STEALTH_ADDRESSES = graphql(`
+    query GetUserStealthAddresses($address: String!) {
+        getUserStealthAddresses(address: $address)
+    }
+`);
