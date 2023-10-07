@@ -25,13 +25,19 @@
     "unique-names-generator": "^4.7.1",
     "viem": "^1.15.4",
     "wagmi": "^1.4.3",
-    "web-vitals": "^2.1.0"
+    "web-vitals": "^2.1.0",
+    "graphql": "^16.8.1",
+    "@apollo/client": "^3.8.4",
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "@graphql-codegen/cli": "5.0.0",
+    "@graphql-codegen/client-preset": "^4.1.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "yarn run graphql && react-scripts start",
+    "build": "yarn run graphql && react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "graphql": "rm -rf ./src/graphql/codegen/generatedTS/* && graphql-codegen --config .graphQlCodegen.ts"
   },
   "eslintConfig": {
     "extends": [
