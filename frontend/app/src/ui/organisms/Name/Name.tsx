@@ -3,8 +3,7 @@ import { Box, Button, IconButton, TextField, Typography } from "@mui/material";
 import { uniqueNamesGenerator, colors, animals, Config } from 'unique-names-generator';
 import { ArrowRightAltRounded, RefreshRounded } from "@mui/icons-material";
 import FocusContainer from "../../atoms/Containers/FocusContainer";
-import { useMutation, useQuery } from '@apollo/client';
-import { GET_USER_BY_ADDRESS, IS_USER_REGISTERED } from '../../../graphql/codegen/queries/User';
+import { useMutation } from '@apollo/client';
 import { REGISTER_USER, SET_USERNAME } from '../../../graphql/codegen/mutations/User';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { useAccount } from 'wagmi'
@@ -18,6 +17,7 @@ const customConfig: Config = {
 export default function Name(): JSX.Element {
   const [refresh, setRefresh] = useState(false);
   const [name, setName] = useState(uniqueNamesGenerator(customConfig));
+  const [customName, setCustomName] = useState<string|undefined>(undefined);
   const { address } = useAccount();
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function Name(): JSX.Element {
   const [setUsername, {}] = useMutation(SET_USERNAME, {
     variables: {
       address: address as string,
-      username: name,
+      username: customName ? customName : name,
     }
   });
 
@@ -68,7 +68,9 @@ export default function Name(): JSX.Element {
               <TextField
                 label=""
                 variant="standard" 
-                placeholder={name}            
+                placeholder={name}
+                value={customName} 
+                onChange={(e) => setCustomName(e.target.value)}         
                 style={{ 
                   textAlign: 'right',
                   flex: 1, 

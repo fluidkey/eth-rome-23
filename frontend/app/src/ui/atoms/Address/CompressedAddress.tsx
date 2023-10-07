@@ -1,6 +1,5 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { useEnsName } from 'wagmi';
 
 interface CompressedAddressProps {
   address: `0x${string}` | `${string}.eth`;
@@ -14,14 +13,6 @@ export default function CompressedAddress({
   characters = 8,
 }: CompressedAddressProps): JSX.Element {
   let formattedAddress = address;
-
-  const { data } = useEnsName({
-    address: address as `0x${string}`,
-  });
-
-  if (data != null) {
-    formattedAddress = data as `${string}.eth`;
-  }
 
   return formattedAddress.length > 30 ? (
     characters < 42 ? (
