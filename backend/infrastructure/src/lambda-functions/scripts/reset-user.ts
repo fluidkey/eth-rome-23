@@ -23,4 +23,4 @@ const resetUser = async (address: string): Promise<void> => {
   });
 }
 
-resetUser('0x').then(() => {});
+resetUser('0xD2661728b35916D0A15834c558D4e6E3b7567f76').then(() => {});
