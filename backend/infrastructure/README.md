@@ -8,3 +8,11 @@ In the `src/` folder you can find the following files and folders:
 - `graphql/`: contains the GraphQL schema and all the mapping templates needed for AWS AppSync
 - `lambda-functions/`: contains the logic for the GraphQL resolver and the ENS OffChain Resolver
 - `main.ts`: contains the AWS CDK definition with all the backend stateless resources.
+
+## Deployment
+
+To deploy the updates, run the following commands:
+
+```bash
+npx projen deploy fluidkey-backend-infrastructure-dev --profile {profile_name}
+```
