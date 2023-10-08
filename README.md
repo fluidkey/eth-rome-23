@@ -14,7 +14,7 @@ We've deployed our Offchain resolver on L1, and it's accessible at
 [0xabE739AF28742cA9B9Aa83E5A01439A66F0361E3](https://etherscan.io/address/0xabE739AF28742cA9B9Aa83E5A01439A66F0361E3).
 You can find the codes and their deployment inside `contracts`.
 
-The backend infrastructure is pure serverless, and you can find the Infrastracture-as-a-code template
+The backend infrastructure is pure serverless, and you can find the Infrastructure-as-a-code template
 inside the `backend` folder.
 
 The frontend is accessible on [ethrome.fluidkey.com](https://ethrome.fluidkey.com/) and it's the gateway for the
