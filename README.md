@@ -1,8 +1,8 @@
-# FluidKey ENS
+# Fluidkey ENS
 
 This is our submission for the ETHRome 23 hackathon, focused n Privacy.
 
-With FluidKey ENS you can allow a user to receive a ENS name, that always resolves to a 
+With Fluidkey ENS you can allow a user to receive a ENS name, that always resolves to a 
 different address, controlled by the user. These addresses, called 
 [Stealth Addresses](https://vitalik.ca/general/2023/01/20/stealth.html), can be used as 
 burner addresses by the user, to receive a one-time payment. Through our UI, accessible via

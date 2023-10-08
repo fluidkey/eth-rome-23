@@ -1,5 +1,5 @@
 {
-  "name": "tproof-smart-contacts",
+  "name": "fluidkey-ens-smart-contracts",
   "scripts": {},
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
